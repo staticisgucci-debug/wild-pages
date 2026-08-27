@@ -1,0 +1,1784 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================================================================
+   WILD PAGES - the look and feel
+   ---------------------------------------------------------------------------
+   Read this top to bottom like a recipe. Each section is labelled.
+   Nothing here needs a build step you don't already have.
+   =========================================================================== */
+
+/* --- 1. Paper, ink, and the two moods ------------------------------------ */
+
+:root {
+  /* Warm paper, not screen-white. Real books are never #ffffff. */
+  --paper: #f6eeda;
+  --paper-edge: #ebdcbe;
+  --ink: #2b2119;
+  --ink-soft: #7c6b55;
+  --rule: rgba(43, 33, 25, 0.14);
+  --sheet: #fffaf0;
+  --grain-opacity: 0.055;
+
+  /* Ember is the default Trail tint until a book says otherwise. */
+  --trail-accent: #d9682a;
+  --trail-glow-1: rgba(255, 138, 60, 0.2);
+  --trail-glow-2: rgba(205, 74, 26, 0.12);
+
+  --reader-fs: 1.25rem;
+  --reader-lh: 1.72;
+  --para-gap: 0.95em;
+  --reader-font: var(--font-body);
+
+  /* The tree you grow by finishing a book. */
+  --tree-ink: #5d8a4a;
+  --tree-leaf-1: #6aa04a;
+  --tree-leaf-2: #86b862;
+  --tree-leaf-3: #4f7f3d;
+
+  --ease-page: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Campfire mode: reading by firelight, not a black rectangle. */
+[data-theme="campfire"] {
+  --paper: #0e1411;
+  --paper-edge: #070b09;
+  --ink: #ece4d2;
+  --ink-soft: #94a08d;
+  --rule: rgba(236, 228, 210, 0.16);
+  --sheet: #16201a;
+  --grain-opacity: 0.035;
+
+  --tree-ink: #7fb069;
+  --tree-leaf-1: #86b862;
+  --tree-leaf-2: #a3cf80;
+  --tree-leaf-3: #62924c;
+}
+
+/* --- 2. Text size and font choices (set by the Settings sheet) ----------- */
+
+[data-size="s"] {
+  --reader-fs: 1.125rem;
+  --reader-lh: 1.68;
+}
+[data-size="m"] {
+  --reader-fs: 1.25rem;
+  --reader-lh: 1.72;
+}
+[data-size="l"] {
+  --reader-fs: 1.4375rem;
+  --reader-lh: 1.76;
+}
+
+[data-font="storybook"] {
+  --reader-font: var(--font-body);
+}
+
+/* Easy Read: Atkinson Hyperlegible, built by the Braille Institute for low
+   vision, and a genuine help for a lot of dyslexic readers. Slightly looser
+   lines and letters, because crowding is the thing that actually hurts. */
+[data-font="easy"] {
+  --reader-font: var(--font-easy);
+  --reader-lh: 1.85;
+  --para-gap: 1.15em;
+}
+
+/* --- 3. The Trails ------------------------------------------------------- */
+/*
+ * There are deliberately NO Trail colours in this file.
+ *
+ * Trails are things you create in The Study, so their colours live in the
+ * database. lib/colors.ts turns each Trail's single colour into the whole set of
+ * variables below, and app/layout.tsx writes them into the page:
+ *
+ *   [data-trail="ember"] { --trail-accent: ...; --trail-glow-1: ...; etc }
+ *
+ * The values in :root above are the fallback, used before any Trail is known.
+ * If you want to change how a Trail looks, change its colour in The Study --
+ * never here.
+ */
+
+/* --- 4. Base document --------------------------------------------------- */
+
+html,
+body {
+  height: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body), Georgia, "Times New Roman", serif;
+  /* Stops "pull down to refresh" from firing while a kid swipes a page. */
+  overscroll-behavior-y: contain;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--trail-glow-1);
+}
+
+:focus-visible {
+  outline: 2px solid var(--trail-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Paper grain. A tiny SVG noise tile, so no image file to download. */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Sits above the words, like texture in real paper. Taps pass through it. */
+  z-index: 2;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+[data-theme="campfire"] .grain::after {
+  mix-blend-mode: screen;
+}
+
+/* The landing page is always dark, whatever the reading theme is, so its grain
+   always needs to lighten rather than darken. */
+.forest-sky.grain::after {
+  mix-blend-mode: screen;
+  opacity: 0.05;
+}
+
+.page-spread {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.9fr);
+}
+
+.page-sheet {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(103, 78, 56, 0.24);
+  border-radius: 2rem;
+  background:
+   linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.08)),
+   linear-gradient(180deg, #f8edd8 0%, #efe0be 100%);
+  box-shadow: 0 28px 80px rgba(80, 60, 40, 0.12);
+  padding: 1.5rem 1.5rem 1.8rem;
+}
+
+.page-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.12'/%3E%3C/svg%3E");
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.page-sheet > * {
+  position: relative;
+  z-index: 1;
+}
+
+.page-sheet--notes {
+  padding-top: 1.25rem;
+}
+
+.page-kicker {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(86, 64, 44, 0.7);
+}
+
+.page-copy {
+  color: rgba(42, 35, 29, 0.92);
+  font-size: 1.08rem;
+  line-height: 1.9;
+}
+
+.page-copy p {
+  margin: 0 0 1.1em;
+  text-wrap: pretty;
+}
+
+.page-copy p.dropcap::first-letter {
+  float: left;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 3.8em;
+  line-height: 0.8;
+  padding-right: 0.12em;
+  padding-top: 0.08em;
+  color: #8d4c2b;
+}
+
+.page-sheet--notes h2 {
+  color: #2b241d;
+}
+
+.page-sheet--notes pre {
+  font-family: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+  letter-spacing: 0.02em;
+}
+
+.note-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid rgba(96, 72, 47, 0.15);
+  padding-top: 0.8rem;
+  color: rgba(66, 54, 44, 0.7);
+}
+
+/* Reader header and jar styles */
+.reader-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.reader-title h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+.jar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(180deg,#fffaf0,#f7ecd5);
+  border: 1px solid rgba(80,60,40,0.12);
+}
+.jar .jar-count {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  background: #ffe54a;
+  color: #2a241d;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+}
+.jar--filled {
+  box-shadow: 0 6px 18px rgba(255,210,80,0.12);
+}
+
+.campfire-toggle {
+  background: linear-gradient(180deg,#fff,#f3e8d0);
+  border: 1px solid rgba(80,60,40,0.1);
+}
+
+.reader-shell .page-sheet {
+  transition: transform 300ms var(--ease-page), box-shadow 300ms var(--ease-page);
+}
+
+.reader-shell .page-sheet:focus-within {
+  transform: translateY(-4px);
+  box-shadow: 0 40px 100px rgba(80,60,40,0.16);
+}
+
+.note-stat strong {
+  color: #2a241d;
+}
+
+@media (max-width: 900px) {
+  .page-spread {
+   grid-template-columns: 1fr;
+  }
+}
+
+/* ===========================================================================
+   5. THE READER
+   ---------------------------------------------------------------------------
+   How pages work, in one paragraph:
+
+   `.reader-cols` is told (by JavaScript, in pixels) to be exactly as wide and
+   tall as one screen, and to lay its text out in columns exactly one screen
+   wide. The browser then flows the whole book into a long horizontal row of
+   invisible page-shaped columns. `.reader-viewport` hides everything outside
+   itself, and turning a page is just sliding `.reader-cols` sideways.
+
+   The browser does the hard part. That is why changing the text size or
+   rotating the tablet re-paginates perfectly instead of clipping words.
+   =========================================================================== */
+
+.reader-shell {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  overflow: hidden;
+}
+
+/* A soft glow in the Trail's colour, bleeding in from the edges of the page. */
+.reader-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(120% 65% at 50% 108%, var(--trail-glow-1), transparent 62%),
+    radial-gradient(80% 45% at 50% -8%, var(--trail-glow-2), transparent 60%),
+    radial-gradient(140% 120% at 50% 50%, transparent 55%, var(--paper-edge));
+}
+
+.reader-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.reader-stage {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  max-width: 46rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 6vw, 3.5rem);
+  padding-block: clamp(0.5rem, 2vh, 1.25rem);
+}
+
+.reader-viewport {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  /* `manipulation` removes the 300ms double-tap-zoom delay, so a tap to turn
+     the page feels instant instead of laggy. */
+  touch-action: manipulation;
+}
+
+.reader-cols {
+  /* width, height, column-width and column-gap are all set inline by the
+     Reader component once it has measured the screen. */
+  column-fill: auto;
+  transform: translate3d(0, 0, 0);
+  transition: transform 300ms var(--ease-page);
+  will-change: transform;
+  font-family: var(--reader-font), Georgia, serif;
+  font-size: var(--reader-fs);
+  line-height: var(--reader-lh);
+  color: var(--ink);
+  /* Stops the iOS text-selection magnifier popping up on a tap-and-hold. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Used while measuring or restoring a saved place, so the reader doesn't
+   visibly slide across twelve pages on open. */
+.reader-cols.is-instant {
+  transition: none;
+}
+
+.reader-cols p {
+  margin: 0 0 var(--para-gap);
+  /* Ragged-right, never justified. Justified text in a narrow column opens
+     "rivers" of white space, which is exactly what struggling readers trip on. */
+  text-align: left;
+  text-wrap: pretty;
+  hyphens: none;
+  orphans: 2;
+  widows: 2;
+}
+
+.reader-cols em {
+  font-style: italic;
+}
+
+/* The first letter of every chapter, oversized, in the Trail's colour.
+   One rule, and suddenly it reads like a real book. */
+.reader-cols p.dropcap::first-letter {
+  float: left;
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 600;
+  font-size: 3.5em;
+  line-height: 0.8;
+  padding: 0.04em 0.09em 0 0;
+  color: var(--trail-accent);
+}
+
+[data-font="easy"] .reader-cols p.dropcap::first-letter {
+  font-family: var(--font-easy), system-ui, sans-serif;
+  font-size: 2.9em;
+  line-height: 0.95;
+}
+
+/* --- Chapter openings --------------------------------------------------- */
+
+.chapter-open {
+  break-inside: avoid;
+  break-after: avoid;
+  text-align: center;
+  padding-top: 4%;
+  margin-bottom: 1.5em;
+}
+
+/* Every chapter but the very first one starts on a fresh page. */
+.chapter-open[data-first="false"] {
+  break-before: column;
+}
+
+.chapter-num {
+  display: block;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.72em;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 0.55em;
+}
+
+.chapter-title {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.5em;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0 0 0.7em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* A small leaf rule under the chapter title. */
+.chapter-rule {
+  display: block;
+  margin: 0 auto;
+  width: 4.5rem;
+  height: 9px;
+  color: var(--trail-accent);
+  opacity: 0.75;
+}
+
+/* --- Scene breaks ------------------------------------------------------- */
+
+.scene-break {
+  break-inside: avoid;
+  text-align: center;
+  margin: 1.1em 0 1.35em;
+  color: var(--trail-accent);
+  opacity: 0.7;
+  letter-spacing: 0.7em;
+  font-size: 0.8em;
+}
+
+/* --- Tap zones ---------------------------------------------------------- */
+
+.tap-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  color: var(--ink-soft);
+}
+
+.tap-zone--prev {
+  left: 0;
+  width: 30%;
+  justify-content: flex-start;
+}
+
+.tap-zone--next {
+  right: 0;
+  width: 70%;
+  justify-content: flex-end;
+}
+
+/* A disabled button still swallows taps, which would make the button on the
+   last page unclickable. Letting taps pass straight through fixes that. */
+.tap-zone:disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
+.tap-chevron {
+  opacity: 0;
+  transition: opacity 180ms ease, transform 180ms ease;
+  transform: translateX(0);
+}
+
+@media (hover: hover) {
+  .tap-zone:not(:disabled):hover .tap-chevron {
+    opacity: 0.45;
+  }
+  .tap-zone--next:not(:disabled):hover .tap-chevron {
+    transform: translateX(3px);
+  }
+  .tap-zone--prev:not(:disabled):hover .tap-chevron {
+    transform: translateX(-3px);
+  }
+}
+
+/* --- The bar at the top and the page count at the bottom ---------------- */
+
+.reader-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: max(0.5rem, env(safe-area-inset-top)) 0.65rem 0.35rem;
+}
+
+.reader-foot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.2rem 1rem max(0.55rem, env(safe-area-inset-bottom));
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  border: 0;
+  border-radius: 0.85rem;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.icon-btn:hover {
+  background: var(--rule);
+  color: var(--ink);
+}
+
+/* ===========================================================================
+   6. THE END OF A BOOK
+   =========================================================================== */
+
+.end-card {
+  break-before: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.35rem;
+}
+
+/* Lifted above the page-turn tap zones so it is actually tappable. The rest of
+   the end card stays below them, so tapping the background still turns back. */
+.end-card .pill {
+  position: relative;
+  z-index: 5;
+}
+
+.end-kicker {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.end-headline {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.5rem, 6vw, 2.1rem);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0.1em 0 0;
+  text-wrap: balance;
+}
+
+.end-note {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: 24ch;
+  margin: 0.2rem 0 0.6rem;
+}
+
+/* --- The tree that grows ------------------------------------------------ */
+
+.tree {
+  width: min(58vw, 13rem);
+  height: auto;
+  overflow: visible;
+}
+
+.tree .grow {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.tree .leaf {
+  transform: scale(0);
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.end-card[data-open="true"] .tree .grow {
+  animation: tree-draw 900ms ease-out forwards;
+}
+
+.end-card[data-open="true"] .tree .leaf {
+  animation: leaf-unfurl 620ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes tree-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes leaf-unfurl {
+  0% {
+    transform: scale(0) rotate(-25deg);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Everything on the end page fades up in sequence, so finishing feels
+   like an event rather than a screen. */
+.end-card .rise {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.end-card[data-open="true"] .rise {
+  animation: rise-in 620ms ease-out forwards;
+}
+
+@keyframes rise-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===========================================================================
+   7. DRIFTING MOTES  (embers, pollen, fireflies)
+   ---------------------------------------------------------------------------
+   Ten small divs on a CSS animation. No canvas, no JavaScript loop, so it
+   costs almost nothing even on an old family tablet.
+   =========================================================================== */
+
+.motes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.mote {
+  position: absolute;
+  bottom: -12px;
+  left: var(--x);
+  width: var(--s);
+  height: var(--s);
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 35%, var(--mote-a, #ffb154), var(--mote-b, #ff7a3d));
+  opacity: 0;
+  filter: blur(0.4px);
+  animation: mote-rise var(--dur) linear var(--delay) infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes mote-rise {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.55);
+    opacity: 0;
+  }
+  12% {
+    opacity: var(--o);
+  }
+  78% {
+    opacity: calc(var(--o) * 0.75);
+  }
+  100% {
+    transform: translate3d(var(--dx), calc(-1 * var(--rise)), 0) scale(1);
+    opacity: 0;
+  }
+}
+
+/* ===========================================================================
+   8. THE VINE PROGRESS BAR
+   =========================================================================== */
+
+.vine {
+  display: block;
+  width: 100%;
+  /* height comes from the viewBox aspect ratio, so leaves never distort */
+  height: auto;
+  overflow: visible;
+}
+
+.vine-track {
+  fill: none;
+  stroke: var(--rule);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.vine-grown {
+  fill: none;
+  stroke: var(--trail-accent);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 380ms var(--ease-page);
+}
+
+.vine-leaf {
+  fill: var(--trail-accent);
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms ease;
+}
+
+.vine-leaf[data-reached="true"] {
+  transform: scale(1);
+  opacity: 0.95;
+}
+
+/* ===========================================================================
+   9. THE SETTINGS SHEET
+   =========================================================================== */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(10, 31, 10, 0.42);
+  backdrop-filter: blur(3px);
+  animation: fade-in 200ms ease-out forwards;
+  border: 0;
+  padding: 0;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sheet {
+  position: fixed;
+  z-index: 41;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 30rem;
+  background: var(--sheet);
+  color: var(--ink);
+  border-radius: 1.4rem 1.4rem 0 0;
+  box-shadow: 0 -18px 50px rgba(10, 31, 10, 0.3);
+  padding: 0.75rem 1.15rem calc(1.15rem + env(safe-area-inset-bottom));
+  animation: sheet-up 280ms var(--ease-page) forwards;
+}
+
+@media (min-width: 640px) {
+  .sheet {
+    border-radius: 1.4rem;
+    bottom: 1.25rem;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(102%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.sheet-grip {
+  width: 2.5rem;
+  height: 0.25rem;
+  border-radius: 9999px;
+  background: var(--rule);
+  margin: 0.15rem auto 0.9rem;
+}
+
+.sheet-label {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 0.45rem;
+}
+
+.seg {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.05rem;
+}
+
+.seg > button {
+  flex: 1 1 0;
+  min-height: 3rem;
+  border: 1.5px solid var(--rule);
+  border-radius: 0.9rem;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.seg > button:hover {
+  border-color: var(--trail-accent);
+}
+
+.seg > button[aria-pressed="true"] {
+  border-color: var(--trail-accent);
+  background: var(--trail-glow-1);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ===========================================================================
+   10. THE FOREST OUTSIDE (landing page)
+   =========================================================================== */
+
+.forest-sky {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background:
+    radial-gradient(90% 55% at 50% 12%, #1d4526 0%, transparent 60%),
+    radial-gradient(60% 40% at 78% 6%, rgba(242, 193, 78, 0.18), transparent 65%),
+    linear-gradient(178deg, #0d2612 0%, #0a1f0a 55%, #061206 100%);
+  color: #f2ecdc;
+}
+
+.moon {
+  position: absolute;
+  top: 8%;
+  right: 12%;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 38% 34%, #fff7e2, #f2c14e 62%, rgba(242, 193, 78, 0) 72%);
+  box-shadow: 0 0 90px 30px rgba(242, 193, 78, 0.16);
+  pointer-events: none;
+}
+
+.horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  /* "slice" crops the sides on a narrow phone rather than squashing the pines. */
+  height: clamp(120px, 24vh, 260px);
+  display: block;
+  pointer-events: none;
+}
+
+.wordmark {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  text-wrap: balance;
+}
+
+.book-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  text-align: left;
+  border-radius: 1.15rem;
+  padding: 1.15rem 1.25rem 1.2rem;
+  border: 1px solid rgba(242, 236, 220, 0.16);
+  background:
+    radial-gradient(120% 90% at 12% 0%, var(--trail-glow-1), transparent 58%),
+    linear-gradient(155deg, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.22));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
+  color: inherit;
+  overflow: hidden;
+  transition: transform 260ms var(--ease-page), box-shadow 260ms ease, border-color 260ms ease;
+}
+
+.book-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--trail-accent);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.42);
+}
+
+.book-card__spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--trail-accent), rgba(0, 0, 0, 0.25));
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(242, 236, 220, 0.22);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(242, 236, 220, 0.82);
+}
+
+/* ===========================================================================
+   11. THE STUDY  (your private admin area)
+   ---------------------------------------------------------------------------
+   Deliberately plain. It has its own colours that do NOT follow the reading
+   theme, because you shouldn't have to fight Campfire mode while uploading a
+   book at midnight.
+   =========================================================================== */
+
+.study-shell {
+  --s-bg: #0b1410;
+  --s-panel: #121e18;
+  --s-line: #24352b;
+  --s-text: #e7e2d5;
+  --s-dim: #93a496;
+  --s-accent: #7fb069;
+  --s-danger: #e2725b;
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at top, rgba(127, 176, 105, 0.22), transparent 28%),
+    linear-gradient(180deg, #0d1812 0%, #0a120e 100%);
+  color: var(--s-text);
+  font-family: var(--font-easy), system-ui, sans-serif;
+  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.study-shell--wide {
+  display: block;
+  padding: 0;
+}
+
+.study-shell--login {
+  background:
+    radial-gradient(circle at top, rgba(255, 206, 123, 0.2), transparent 22%),
+    linear-gradient(180deg, #0d1812 0%, #09130d 100%);
+}
+
+.study-login-panel {
+  width: min(100%, 64rem);
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.study-login-hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(1.4rem, 3vw, 2.3rem);
+  border: 1px solid rgba(160, 196, 147, 0.22);
+  border-radius: 1.5rem;
+  background:
+    linear-gradient(180deg, rgba(17, 31, 23, 0.96), rgba(12, 20, 16, 0.9));
+  box-shadow: 0 28px 70px rgba(2, 8, 6, 0.45);
+}
+
+.study-login-hero::before {
+  content: "";
+  position: absolute;
+  inset: auto -8% -15% auto;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(149, 204, 124, 0.28), rgba(149, 204, 124, 0) 68%);
+  pointer-events: none;
+}
+
+.study-hero-kicker {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 0.32rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  background: rgba(127, 176, 105, 0.12);
+  border: 1px solid rgba(127, 176, 105, 0.28);
+  color: #dfeec9;
+}
+
+.study-login-hero h1 {
+  margin: 1rem 0 0.45rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+
+.study-login-hero p {
+  margin: 0;
+  max-width: 31ch;
+  color: var(--s-dim);
+  line-height: 1.7;
+}
+
+.study-hero-list {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1.2rem;
+  color: #d7e7d1;
+  font-size: 0.92rem;
+}
+
+@media (max-width: 720px) {
+  .study-login-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+.study-brand-wrap {
+  margin-bottom: 1rem;
+}
+
+.study-brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid rgba(127, 176, 105, 0.3);
+  background: rgba(127, 176, 105, 0.08);
+  color: #d9f0c9;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 0.6rem;
+}
+
+.study-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.study-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(127, 176, 105, 0), rgba(127, 176, 105, 0.7), rgba(127, 176, 105, 0));
+}
+
+.study-login-form {
+  margin-top: 1rem;
+}
+
+.study-badge-row {
+  margin-bottom: 0.35rem;
+}
+
+.study-mini-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.24rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(127, 176, 105, 0.1);
+  border: 1px solid rgba(127, 176, 105, 0.25);
+  color: #dfeec9;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.study-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.study-button--link {
+  text-decoration: none;
+  margin-top: 0;
+}
+
+.study-error {
+  margin-top: 0.8rem;
+  color: #f5b3a6;
+  font-size: 0.86rem;
+}
+
+.study-main {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 5rem;
+}
+
+.study-main--editor {
+  max-width: 72rem;
+}
+
+.study-page-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.study-h1--editor {
+  margin: 0;
+}
+
+.study-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  padding: 0.85rem 1.25rem;
+  background: #0a1f0a;
+  border-bottom: 1px solid var(--s-line);
+}
+
+.study-brand {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  color: var(--s-text);
+  text-decoration: none;
+}
+
+.study-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-right: auto;
+}
+
+.study-nav a {
+  color: var(--s-dim);
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 0.2rem 0;
+  border-bottom: 1.5px solid transparent;
+}
+
+.study-nav a:hover {
+  color: var(--s-text);
+  border-bottom-color: var(--s-accent);
+}
+
+.study-card {
+  width: 100%;
+  background: var(--s-panel);
+  border: 1px solid var(--s-line);
+  border-radius: 0.9rem;
+  padding: 1.35rem 1.4rem;
+}
+
+.study-card + .study-card {
+  margin-top: 1.1rem;
+}
+
+.study-h1 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+
+.study-h2 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0 0 0.2rem;
+}
+
+.study-hint {
+  color: var(--s-dim);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+.study-label {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--s-dim);
+  margin: 0.9rem 0 0.35rem;
+}
+
+.study-input,
+.study-select,
+.study-textarea {
+  width: 100%;
+  background: #0b1310;
+  border: 1.5px solid var(--s-line);
+  border-radius: 0.6rem;
+  color: var(--s-text);
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.7rem 0.8rem;
+}
+
+.study-textarea {
+  min-height: 15rem;
+  line-height: 1.6;
+  resize: vertical;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.9rem;
+}
+
+.study-input:focus,
+.study-select:focus,
+.study-textarea:focus {
+  outline: none;
+  border-color: var(--s-accent);
+}
+
+.study-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.85rem;
+  padding: 0 1.1rem;
+  margin-top: 1rem;
+  border: 1.5px solid var(--s-accent);
+  border-radius: 0.6rem;
+  background: var(--s-accent);
+  color: #08120a;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.study-button:hover {
+  filter: brightness(1.08);
+}
+
+.study-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.study-button--quiet {
+  background: transparent;
+  border-color: var(--s-line);
+  color: var(--s-text);
+  font-weight: 400;
+  margin-top: 0;
+}
+
+.study-button--quiet:hover {
+  border-color: var(--s-accent);
+  filter: none;
+}
+
+.study-button--danger {
+  background: transparent;
+  border-color: rgba(226, 114, 91, 0.5);
+  color: var(--s-danger);
+  font-weight: 400;
+}
+
+.study-button--small {
+  min-height: 2.2rem;
+  padding: 0 0.7rem;
+  font-size: 0.82rem;
+  margin-top: 0;
+}
+
+.study-editor-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.study-editor-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.study-editor-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+.study-editor-panel {
+  padding: 1.1rem 1.1rem 1.2rem;
+}
+
+.study-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.study-eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--s-dim);
+}
+
+.study-field-group {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.9rem;
+}
+
+.study-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
+.study-dropzone {
+  margin-top: 0.4rem;
+  border: 1.5px dashed rgba(127, 176, 105, 0.45);
+  border-radius: 1rem;
+  background: rgba(127, 176, 105, 0.04);
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.study-dropzone--active {
+  border-color: rgba(127, 176, 105, 0.9);
+  background: rgba(127, 176, 105, 0.08);
+  transform: translateY(-1px);
+}
+
+.study-dropzone-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.study-dropzone-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  border-radius: 9999px;
+  font-size: 1.2rem;
+  background: rgba(255, 200, 103, 0.12);
+  color: #f9d48a;
+}
+
+.study-dropzone-title {
+  margin: 0;
+  color: var(--s-text);
+  font-weight: 600;
+}
+
+.study-dropzone-copy {
+  margin: 0.25rem 0 0;
+  color: var(--s-dim);
+  font-size: 0.84rem;
+}
+
+.study-hidden-input {
+  display: none;
+}
+
+.study-cover-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--s-line);
+  border-radius: 0.8rem;
+  background: rgba(255,255,255,0.02);
+}
+
+.study-cover-preview img {
+  width: 68px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(127, 176, 105, 0.28);
+}
+
+.study-cover-preview span {
+  color: var(--s-dim);
+  font-size: 0.8rem;
+}
+
+.study-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.study-side-actions {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.study-side-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+@media (min-width: 860px) {
+  .study-editor-grid {
+    grid-template-columns: 0.9fr 1.1fr;
+  }
+}
+
+.study-error,
+.study-ok,
+.study-warning {
+  border-radius: 0.55rem;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0.9rem 0 0;
+}
+
+.study-error {
+  background: rgba(226, 114, 91, 0.12);
+  border: 1px solid rgba(226, 114, 91, 0.4);
+  color: #f0a595;
+}
+
+.study-ok {
+  background: rgba(127, 176, 105, 0.12);
+  border: 1px solid rgba(127, 176, 105, 0.4);
+  color: #b7d9a4;
+}
+
+.study-warning {
+  background: rgba(242, 193, 78, 0.1);
+  border: 1px solid rgba(242, 193, 78, 0.35);
+  color: #efd79a;
+  margin: 1rem 1.25rem 0;
+}
+
+.study-steps {
+  color: var(--s-dim);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  padding-left: 1.2rem;
+  margin: 0 0 1rem;
+}
+
+.study-steps li {
+  margin-bottom: 0.5rem;
+}
+
+.study-pre,
+.study-shell code {
+  background: #0b1310;
+  border: 1px solid var(--s-line);
+  border-radius: 0.35rem;
+  padding: 0.1rem 0.35rem;
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 0.82rem;
+  color: #cfe0c6;
+}
+
+.study-pre {
+  display: block;
+  padding: 0.6rem 0.7rem;
+  margin: 0.5rem 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.study-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.study-cols {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .study-cols--2 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .study-cols--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- A row in a list of Trails, Levels or books -------------------------- */
+
+.study-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-top: 1px solid var(--s-line);
+}
+
+.study-item:first-of-type {
+  border-top: 0;
+}
+
+.study-item__grow {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.study-item__title {
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+
+.study-item__sub {
+  color: var(--s-dim);
+  font-size: 0.82rem;
+  margin-top: 0.1rem;
+}
+
+.study-item[data-inactive="true"] .study-item__title,
+.study-item[data-inactive="true"] .study-swatch {
+  opacity: 0.45;
+}
+
+.study-swatch {
+  width: 1.6rem;
+  height: 1.6rem;
+  flex: none;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.study-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--s-line);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--s-dim);
+  white-space: nowrap;
+}
+
+.study-badge[data-status="published"] {
+  border-color: rgba(127, 176, 105, 0.5);
+  color: #b7d9a4;
+}
+
+.study-badge[data-status="draft"] {
+  border-color: rgba(242, 193, 78, 0.45);
+  color: #efd79a;
+}
+
+/* --- Drop a file here ---------------------------------------------------- */
+
+.study-drop {
+  border: 2px dashed var(--s-line);
+  border-radius: 0.75rem;
+  padding: 1.1rem;
+  text-align: center;
+  color: var(--s-dim);
+  font-size: 0.88rem;
+  transition: border-color 150ms ease, background 150ms ease;
+  cursor: pointer;
+}
+
+.study-drop[data-over="true"] {
+  border-color: var(--s-accent);
+  background: rgba(127, 176, 105, 0.08);
+  color: var(--s-text);
+}
+
+.study-cover-preview {
+  display: block;
+  width: 100%;
+  max-width: 11rem;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 0.6rem;
+  border: 1px solid var(--s-line);
+  background: #0b1310;
+}
+
+/* --- Live figures while you paste --------------------------------------- */
+
+.study-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.4rem;
+  padding: 0.85rem 0 0;
+}
+
+.study-stat__value {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.study-stat__label {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--s-dim);
+}
+
+/* ===========================================================================
+   12. STILLNESS  -  one switch that turns off every moving thing
+   =========================================================================== */
+
+[data-stillness="on"] .motes {
+  display: none;
+}
+
+[data-stillness="on"] .reader-cols {
+  transition: none;
+}
+
+/* The staggered delays are set as inline styles, so overriding them needs
+   !important. Without this, choosing Stillness would mean staring at a blank
+   end page for two seconds waiting for delays that never animate. */
+[data-stillness="on"] .end-card[data-open="true"] .tree .grow,
+[data-stillness="on"] .end-card[data-open="true"] .tree .leaf,
+[data-stillness="on"] .end-card[data-open="true"] .rise {
+  animation-duration: 1ms;
+  animation-delay: 0ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motes {
+    display: none;
+  }
+  .reader-cols,
+  .vine-grown,
+  .vine-leaf,
+  .book-card {
+    transition-duration: 1ms;
+  }
+  .sheet,
+  .sheet-backdrop,
+  .end-card[data-open="true"] .tree .grow,
+  .end-card[data-open="true"] .tree .leaf,
+  .end-card[data-open="true"] .rise {
+    animation-duration: 1ms;
+    animation-delay: 0ms !important;
+  }
+}
+
+/* --- KID MAGIC: FINAL BREATHING EMBERS --- */
+.mote-wrap {
+  position: absolute;
+  will-change: transform;
+  transition: transform 0.85s cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+}
+.mote-wrap {
+  position: absolute;
+  will-change: transform;
+  transition: transform 0.85s cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+}
+.mote {
+  display: block;
+  border: none;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 35%, #ffde8a, var(--glow, #ff9a3d));
+  box-shadow: 0 0 10px var(--glow), 0 0 20px var(--glow);
+  opacity: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  animation: mote-rise-final var(--dur, 16s) linear infinite;
+}
+.mote.is-popped { animation: motePop 0.5s ease forwards !important; }
+
+@keyframes mote-rise-final {
+  0% { transform: translate3d(0, 0, 0) scale(0.6); opacity: 0; }
+  10% { opacity: var(--o, 0.7); }
+  85% { opacity: var(--o, 0.7); }
+  100% { transform: translate3d(var(--drift, 40px), -95vh, 0) scale(1.1); opacity: 0; }
+}
+@keyframes motePop {
+  0% { transform: scale(1); opacity: 1; }
+  30% { transform: scale(4); filter: brightness(4) blur(1px); }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+.reader-viewport {
+  animation: parchmentBreathe 8s ease-in-out infinite;
+}
+@keyframes parchmentBreathe {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.03) contrast(1.02); }
+}
